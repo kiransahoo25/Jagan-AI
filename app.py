@@ -17,19 +17,16 @@ st.set_page_config(page_title="JAGAN AI", page_icon="🛕", layout="wide")
 # --- CUSTOM CSS FOR FUTURISTIC HUD THEME ---
 st.markdown("""
     <style>
-    /* Import Futuristic Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600&display=swap');
     
     html, body, [class*="css"] {
         font-family: 'Rajdhani', sans-serif;
     }
 
-    /* Hide Streamlit default header and footer */
     header[data-testid="stHeader"] { display: none !important; }
     footer { display: none !important; }
     #MainMenu { display: none !important; }
     
-    /* 1. Deep Space Background with Cyber Grid and Temple */
     .stApp {
         background-color: #050510;
         background-image: 
@@ -41,7 +38,6 @@ st.markdown("""
         overflow-x: hidden;
     }
 
-    /* Animated Cyber Grid Overlay */
     .stApp::before {
         content: "";
         position: fixed;
@@ -60,7 +56,6 @@ st.markdown("""
         100% { transform: translateY(40px); }
     }
     
-    /* 2. Massive HUD Header */
     .hud-wrapper {
         display: flex;
         justify-content: center;
@@ -70,7 +65,6 @@ st.markdown("""
         margin-bottom: 2rem;
     }
 
-    /* The Massive Rings */
     @keyframes spin-cw { 100% { transform: rotate(360deg); } }
     @keyframes spin-ccw { 100% { transform: rotate(-360deg); } }
     @keyframes pulse { 
@@ -105,7 +99,6 @@ st.markdown("""
         animation: spin-cw 20s linear infinite;
     }
 
-    /* Glowing Core and Text */
     .hud-core {
         position: absolute;
         width: 180px; height: 180px;
@@ -128,13 +121,12 @@ st.markdown("""
         letter-spacing: 2px;
     }
 
-    /* 3. Futuristic Chat Bubbles (Holographic) */
     [data-testid="stChatMessage"] {
         background: rgba(10, 15, 30, 0.7) !important;
         backdrop-filter: blur(12px);
         border: 1px solid rgba(0, 255, 255, 0.2) !important;
-        border-left: 4px solid #e85d04 !important; /* Orange left bar */
-        border-radius: 0px 15px 15px 0px !important; /* Cut corner look */
+        border-left: 4px solid #e85d04 !important;
+        border-radius: 0px 15px 15px 0px !important;
         box-shadow: 0 0 15px rgba(0,0,0,0.8), inset 0 0 10px rgba(0,255,255,0.1) !important;
         margin-bottom: 1.5rem !important;
         padding: 1.5rem !important;
@@ -147,24 +139,22 @@ st.markdown("""
     }
     
     [data-testid="stChatMessage"] p {
-        color: #d1e8ff !important; /* Ice blue text for readability */
+        color: #d1e8ff !important;
         font-weight: 500 !important;
         font-size: 1.15rem;
         line-height: 1.5;
     }
 
-    /* 4. Sidebar HUD */
     [data-testid="stSidebar"] {
         background-color: rgba(5, 5, 12, 0.95) !important;
         border-right: 2px solid rgba(0, 255, 255, 0.3);
         box-shadow: 10px 0 30px rgba(0,0,0,0.8);
     }
     [data-testid="stSidebar"] * {
-        color: #00ffff !important; /* Cyan text */
+        color: #00ffff !important;
         font-family: 'Rajdhani', sans-serif;
     }
     
-    /* 5. Holographic Chat Input */
     [data-testid="stChatInput"] {
         border-radius: 5px !important;
         border: 1px solid rgba(0, 255, 255, 0.5) !important;
@@ -181,7 +171,6 @@ st.markdown("""
         box-shadow: 0 0 30px rgba(232, 93, 4, 0.6) !important;
     }
     
-    /* Subtitle */
     .subtitle {
         text-align: center; 
         color: #00ffff !important; 
@@ -304,11 +293,8 @@ if prompt := st.chat_input("ENTER COMMAND OR QUERY (ENGLISH / ଓଡ଼ିଆ)..
                 
                 response = agent.step(prompt, on_tool)
                 
-                if tool_log:
-                    with st.expander("🖥️ SYSTEM LOGS"):
-                        for log in tool_log:
-                            st.write(log)
-                            
+                # (The SYSTEM LOGS expander code has been removed from here)
+
                 st.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
                 
