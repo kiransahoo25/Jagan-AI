@@ -12,80 +12,88 @@ from jagan.tools import register_all
 from jagan.agent import Agent
 
 # --- PAGE CONFIGURATION ---
-st.set_page_config(page_title="Jagan AI", page_icon="🛕", layout="wide")
+st.set_page_config(page_title="Jagan AI | ଜୟ ଜଗନ୍ନାଥ", page_icon="🛕", layout="wide")
 
-# --- CUSTOM CSS TO FORCE BLACK, BOLD TEXT AND LIGHT MODE ---
+# --- CUSTOM CSS FOR A CLEAN, PREMIUM LOOK ---
 st.markdown("""
     <style>
-    /* Force Light Mode and black text globally */
-    :root, .stApp {
-        color-scheme: light !important;
-        background-color: #f8f9fa !important;
-        color: #000000 !important;
+    /* Import a clean font */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Hide Streamlit default header and footer for a cleaner app feel */
+    header[data-testid="stHeader"] { display: none !important; }
+    footer { display: none !important; }
+    #MainMenu { display: none !important; }
+    
+    /* Main background color */
+    .stApp {
+        background-color: #f4f6f8;
     }
     
-    /* Make all standard text black and bold */
+    /* Force dark, bold text globally */
     p, h1, h2, h3, h4, h5, h6, label, .stMarkdown, .stText {
-        color: #000000 !important;
+        color: #1a1a1a !important;
         font-weight: 600 !important;
     }
     
-    /* Fix sidebar text and inputs */
+    /* Sidebar Styling */
     [data-testid="stSidebar"] {
         background-color: #ffffff !important;
-        border-right: 2px solid #e0e0e0;
+        border-right: 1px solid #e0e0e0;
     }
     [data-testid="stSidebar"] * {
-        color: #000000 !important;
-    }
-    [data-testid="stSidebar"] input, [data-testid="stSidebar"] .stTextInput input {
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-        font-weight: 600 !important;
-        background-color: #ffffff !important;
-        border: 1px solid #cccccc !important;
+        color: #1a1a1a !important;
     }
     
-    /* Fix chat message text */
-    [data-testid="stChatMessage"] p, [data-testid="stChatMessage"] div {
-        color: #000000 !important;
-        font-weight: 600 !important;
-    }
+    /* Chat Message Styling */
     [data-testid="stChatMessage"] {
         background-color: #ffffff !important;
         border: 1px solid #e0e0e0 !important;
-        border-radius: 12px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        border-radius: 12px !important;
+        padding: 1.2rem !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+        margin-bottom: 1rem !important;
+    }
+    [data-testid="stChatMessage"] p {
+        font-weight: 400 !important; /* Keep chat text normal weight for readability */
+        font-size: 1.05rem;
     }
     
-    /* Fix chat input placeholder */
-    input::placeholder, textarea::placeholder {
-        color: #666666 !important;
-        -webkit-text-fill-color: #666666 !important;
-        font-weight: normal !important;
-        opacity: 1 !important;
+    /* Chat Input Styling */
+    [data-testid="stChatInput"] {
+        border-radius: 20px !important;
+        border: 2px solid #e0e0e0 !important;
+        background-color: #ffffff !important;
+    }
+    [data-testid="stChatInput"]:focus-within {
+        border-color: #e85d04 !important;
     }
     
-    /* Header Styling */
+    /* Header Container */
     .header-container {
         text-align: center;
         padding: 1.5rem 0;
-        background: linear-gradient(90deg, #c1272d, #e85d04);
+        background: linear-gradient(135deg, #c1272d, #e85d04);
         border-radius: 15px;
         margin-bottom: 2rem;
-        box-shadow: 0 4px 15px rgba(193, 39, 45, 0.2);
+        box-shadow: 0 6px 20px rgba(232, 93, 4, 0.2);
     }
     .header-title {
         color: #ffffff !important;
         font-size: 2.5rem;
-        font-weight: bold !important;
+        font-weight: 800 !important;
         margin: 0;
+        letter-spacing: 1px;
     }
     .header-subtitle {
-        color: #ffffff !important;
+        color: #ffe3d3 !important;
         font-size: 1.1rem;
         margin-top: 5px;
-        font-weight: 600 !important;
+        font-weight: 500 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -98,55 +106,51 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- SIDEBAR ---
+# --- HIDDEN CONFIGURATION ---
+# We no longer show these inputs. They are hardcoded for the cloud deployment.
+# If you want to test locally, put your key in a .env file or streamlit secrets.
+try:
+    api_key = st.secrets["GROQ_API_KEY"]
+except Exception:
+    # Fallback for local testing (you can type it in the terminal or set an env var)
+    api_key = os.getenv("GROQ_API_KEY", "")
+    
+base_url = "https://api.groq.com/openai/v1"
+model_name = "openai/gpt-oss-120b"
+
+# --- SIDEBAR (Knowledge Base Only) ---
 with st.sidebar:
-    st.markdown("### ⚙️ Configuration")
-    
-        # Secure API Key Logic for Cloud + Local
-    try:
-        api_key = st.secrets["GROQ_API_KEY"]
-        st.success("✅ Connected to Cloud API")
-    except Exception:
-        api_key = st.text_input("API Key / Ollama", value="", type="password")
-        if not api_key:
-            st.warning("Please enter your API Key to start.")
-    
-    # Defaults set for Groq Cloud
-    base_url = st.text_input("Base URL", value="https://api.groq.com/openai/v1")
-    model_name = st.text_input("Model", value="openai/gpt-oss-120b")
-    
+    st.markdown("### 🛕 Jagan AI")
     st.markdown("---")
-    st.markdown("### 📚 Knowledge Base")
-    uploaded_files = st.file_uploader("Upload .txt files about Odisha", type=["txt"], accept_multiple_files=True)
     
-    if st.button("Index Uploaded Files", use_container_width=True) and uploaded_files:
-        with st.spinner("Indexing knowledge..."):
-            data_dir = Path("odisha_knowledge")
-            data_dir.mkdir(exist_ok=True)
-            
-            for uploaded_file in uploaded_files:
-                file_path = data_dir / uploaded_file.name
-                with open(file_path, "wb") as f:
-                    f.write(uploaded_file.getbuffer())
-            
-            if st.session_state.get("store"):
-                ingest(data_dir, st.session_state["store"])
-                st.success(f"Indexed {len(uploaded_files)} files!")
-            else:
-                st.error("Vector store not initialized. Check logs.")
+    # Put the knowledge base in an expander so it doesn't clutter the UI
+    with st.expander("📚 Odisha Knowledge Base (Admin)", expanded=False):
+        st.info("Upload .txt files to teach Jagan about Odisha.")
+        uploaded_files = st.file_uploader("Upload text files", type=["txt"], accept_multiple_files=True, label_visibility="collapsed")
+        
+        if st.button("Index Files", use_container_width=True) and uploaded_files:
+            with st.spinner("Indexing..."):
+                data_dir = Path("odisha_knowledge")
+                data_dir.mkdir(exist_ok=True)
+                
+                for uploaded_file in uploaded_files:
+                    file_path = data_dir / uploaded_file.name
+                    with open(file_path, "wb") as f:
+                        f.write(uploaded_file.getbuffer())
+                
+                if st.session_state.get("store"):
+                    ingest(data_dir, st.session_state["store"])
+                    st.success(f"Indexed {len(uploaded_files)} files!")
+                else:
+                    st.error("Vector store not initialized.")
 
 # --- INITIALIZE BACKEND ---
 @st.cache_resource
 def get_agent(api_key, base_url, model_name):
-    # If no API key is provided (local run), fallback to ollama
-    if not api_key:
-        api_key = "ollama"
-        base_url = "http://localhost:11434/v1"
-        
     os.environ["JAGAN_API_KEY"] = api_key
     os.environ["JAGAN_BASE_URL"] = base_url
     os.environ["JAGAN_MODEL"] = model_name
-    os.environ["JAGAN_CONFIRM"] = "0" # Disable terminal confirmations for web
+    os.environ["JAGAN_CONFIRM"] = "0"
 
     cfg = load_config()
     llm = LLM(cfg)
@@ -169,7 +173,10 @@ def get_agent(api_key, base_url, model_name):
 
     return Agent(llm, reg, mem, cfg), store
 
-# Only initialize the agent if we have an API key (or are running locally)
+if not api_key:
+    st.error("⚠️ API Key not found. Please configure `GROQ_API_KEY` in your Streamlit Secrets.")
+    st.stop()
+
 agent, store = get_agent(api_key, base_url, model_name)
 st.session_state["store"] = store
 
@@ -177,13 +184,12 @@ st.session_state["store"] = store
 # Initialize chat history
 if "messages" not in st.session_state or len(st.session_state.messages) == 0:
     st.session_state.messages = []
-    # Welcome Message
     with st.chat_message("assistant", avatar="🤖"):
-        st.markdown("ନମସ୍କାର! (Namaskar!) I am **Jagan**, your AI assistant. "
+        st.markdown("ନମସ୍କାର! (Namaskar!) I am **Jagan**. "
                     "I can help you write code, research topics, and learn about Odisha's rich culture. "
                     "How can I help you today?")
 
-# Display chat messages from history
+# Display chat messages
 for message in st.session_state.messages:
     avatar = "🧑‍💻" if message["role"] == "user" else "🤖"
     with st.chat_message(message["role"], avatar=avatar):
@@ -191,12 +197,10 @@ for message in st.session_state.messages:
 
 # Chat Input
 if prompt := st.chat_input("Ask Jagan anything (English or ଓଡ଼ିଆ)..."):
-    # Add user message
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user", avatar="🧑‍💻"):
         st.markdown(prompt)
 
-    # Generate response
     with st.chat_message("assistant", avatar="🤖"):
         with st.spinner("Jagan is thinking..."):
             tool_log = []
@@ -204,7 +208,6 @@ if prompt := st.chat_input("Ask Jagan anything (English or ଓଡ଼ିଆ)...")
                 tool_log.append(f"🛠️ Used tool: `{name}`")
 
             try:
-                # Update store reference in case it was just indexed
                 if store:
                     agent.reg.tools["search_docs"].fn.__globals__['store'] = store
                 
@@ -219,4 +222,4 @@ if prompt := st.chat_input("Ask Jagan anything (English or ଓଡ଼ିଆ)...")
                 st.session_state.messages.append({"role": "assistant", "content": response})
                 
             except Exception as e:
-                st.error(f"Error: {str(e)}\n\nCheck your API key and model name in the sidebar.")
+                st.error(f"Error: {str(e)}")
