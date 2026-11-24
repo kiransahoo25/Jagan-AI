@@ -102,9 +102,18 @@ st.markdown("""
 with st.sidebar:
     st.markdown("### ⚙️ Configuration")
     
-    api_key = st.text_input("API Key / Ollama", value="ollama", type="password")
-    base_url = st.text_input("Base URL", value="http://localhost:11434/v1")
-    model_name = st.text_input("Model", value="qwen2.5-coder:7b")
+        # Secure API Key Logic for Cloud + Local
+    try:
+        api_key = st.secrets["GROQ_API_KEY"]
+        st.success("✅ Connected to Cloud API")
+    except Exception:
+        api_key = st.text_input("API Key / Ollama", value="", type="password")
+        if not api_key:
+            st.warning("Please enter your API Key to start.")
+    
+    # Defaults set for Groq Cloud
+    base_url = st.text_input("Base URL", value="https://api.groq.com/openai/v1")
+    model_name = st.text_input("Model", value="openai/gpt-oss-120b")
     
     st.markdown("---")
     st.markdown("### 📚 Knowledge Base")
@@ -124,15 +133,20 @@ with st.sidebar:
                 ingest(data_dir, st.session_state["store"])
                 st.success(f"Indexed {len(uploaded_files)} files!")
             else:
-                st.error("Vector store not initialized.")
+                st.error("Vector store not initialized. Check logs.")
 
 # --- INITIALIZE BACKEND ---
 @st.cache_resource
 def get_agent(api_key, base_url, model_name):
+    # If no API key is provided (local run), fallback to ollama
+    if not api_key:
+        api_key = "ollama"
+        base_url = "http://localhost:11434/v1"
+        
     os.environ["JAGAN_API_KEY"] = api_key
     os.environ["JAGAN_BASE_URL"] = base_url
     os.environ["JAGAN_MODEL"] = model_name
-    os.environ["JAGAN_CONFIRM"] = "0"
+    os.environ["JAGAN_CONFIRM"] = "0" # Disable terminal confirmations for web
 
     cfg = load_config()
     llm = LLM(cfg)
@@ -155,6 +169,7 @@ def get_agent(api_key, base_url, model_name):
 
     return Agent(llm, reg, mem, cfg), store
 
+# Only initialize the agent if we have an API key (or are running locally)
 agent, store = get_agent(api_key, base_url, model_name)
 st.session_state["store"] = store
 
@@ -189,8 +204,9 @@ if prompt := st.chat_input("Ask Jagan anything (English or ଓଡ଼ିଆ)...")
                 tool_log.append(f"🛠️ Used tool: `{name}`")
 
             try:
-                # Update store reference
-                agent.reg.tools["search_docs"].fn.__globals__['store'] = store
+                # Update store reference in case it was just indexed
+                if store:
+                    agent.reg.tools["search_docs"].fn.__globals__['store'] = store
                 
                 response = agent.step(prompt, on_tool)
                 
@@ -203,4 +219,4 @@ if prompt := st.chat_input("Ask Jagan anything (English or ଓଡ଼ିଆ)...")
                 st.session_state.messages.append({"role": "assistant", "content": response})
                 
             except Exception as e:
-                st.error(f"Error: {str(e)}")
+                st.error(f"Error: {str(e)}\n\nCheck your API key and model name in the sidebar.")
