@@ -23,7 +23,6 @@ def get_base64_image(image_path):
     except FileNotFoundError:
         return "" 
 
-# Load your new image (make sure it is named bg.jpg and in the same folder)
 bg_image_base64 = get_base64_image("bg.jpg")
 
 # --- CUSTOM CSS FOR FUTURISTIC HUD THEME & MOBILE RESPONSIVENESS ---
@@ -35,15 +34,24 @@ st.markdown(f"""
         font-family: 'Rajdhani', sans-serif;
     }}
 
-    /* Keep the sidebar toggle visible on mobile, but hide other standard headers */
-    header[data-testid="stHeader"] {{
-        background: transparent !important;
-    }}
-    .stDeployButton {{ display: none !important; }}
-    #MainMenu {{ display: none !important; }}
-    footer {{ display: none !important; }}
+    /* ========================================================= */
+    /* HIDE STREAMLIT & GITHUB BRANDING */
+    /* ========================================================= */
+    header[data-testid="stHeader"] {{ display: none !important; }}
+    #MainMenu {{ visibility: hidden !important; }}
+    footer {{ visibility: hidden !important; }}
     
-    /* Ensure the hamburger menu for the sidebar is highly visible on mobile */
+    /* Hide the top-right toolbar (GitHub icon, Share, Edit, etc.) */
+    [data-testid="stToolbar"] {{ display: none !important; }}
+    [data-testid="stDecoration"] {{ display: none !important; }}
+    [data-testid="stStatusWidget"] {{ display: none !important; }}
+    
+    /* Hide the Deploy button and Manage app button */
+    .stDeployButton {{ display: none !important; }}
+    [data-testid="stAppDeployButton"] {{ display: none !important; }}
+    [data-testid="manage-app-button"] {{ display: none !important; }}
+    
+    /* Keep the mobile sidebar toggle visible even though header is hidden */
     [data-testid="collapsedControl"] {{
         color: #00ffff !important;
         background: rgba(5, 5, 12, 0.9) !important;
@@ -214,38 +222,20 @@ st.markdown(f"""
     }}
 
     /* ========================================================= */
-    /* MOBILE RESPONSIVENESS (Screens smaller than 768px) */
+    /* MOBILE RESPONSIVENESS */
     /* ========================================================= */
     @media (max-width: 768px) {{
-        /* Fix iOS background scrolling bug */
-        .stApp {{
-            background-attachment: scroll !important;
-        }}
-
-        /* Shrink the HUD Rings */
+        .stApp {{ background-attachment: scroll !important; }}
         .hud-wrapper {{ height: 220px; margin-bottom: 1rem; }}
         .hud-ring-outer {{ width: 200px; height: 200px; }}
         .hud-ring-mid {{ width: 170px; height: 170px; }}
         .hud-ring-inner {{ width: 140px; height: 140px; }}
         .hud-core {{ width: 110px; height: 110px; }}
-
-        /* Scale down fonts */
         .header-title {{ font-size: 1.5rem; letter-spacing: 1px; }}
         .subtitle {{ font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 2rem; }}
-        
-        /* Adjust Chat Bubbles */
-        [data-testid="stChatMessage"] {{
-            padding: 1rem !important;
-            margin-bottom: 1rem !important;
-        }}
-        [data-testid="stChatMessage"] p {{
-            font-size: 1rem; /* Smaller text for phone */
-        }}
-
-        /* Adjust Chat Input */
-        [data-testid="stChatInput"] textarea {{
-            font-size: 1rem;
-        }}
+        [data-testid="stChatMessage"] {{ padding: 1rem !important; margin-bottom: 1rem !important; }}
+        [data-testid="stChatMessage"] p {{ font-size: 1rem; }}
+        [data-testid="stChatInput"] textarea {{ font-size: 1rem; }}
     }}
     </style>
 """, unsafe_allow_html=True)
