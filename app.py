@@ -32,20 +32,25 @@ st.markdown(f"""
     
     html, body, [class*="css"] {{
         font-family: 'Rajdhani', sans-serif;
-        overflow-x: hidden !important; /* Stop horizontal shaking */
+        overflow-x: hidden !important;
     }}
 
     /* ========================================================= */
-    /* HIDE BRANDING (Safely for mobile) */
+    /* HIDE ALL STREAMLIT BRANDING & BOTTOM BARS */
     /* ========================================================= */
-    header[data-testid="stHeader"] {{
-        background: transparent !important;
+    header[data-testid="stHeader"] {{ background: transparent !important; }}
+    
+    #MainMenu, footer, [data-testid="stToolbar"], .stDeployButton, 
+    [data-testid="stAppDeployButton"], [data-testid="manage-app-button"],
+    [data-testid="stBottom"] {{ 
+        display: none !important; 
     }}
-    #MainMenu, footer, [data-testid="stToolbar"], .stDeployButton, [data-testid="stAppDeployButton"] {{
+    
+    /* Hide the new Streamlit bottom floating bar */
+    div[data-testid="stAppViewBlockContainer"] > div:last-child {{
         display: none !important;
     }}
     
-    /* Make sure the sidebar toggle is visible and glowing on mobile */
     [data-testid="collapsedControl"] {{
         color: #00ffff !important;
         background: rgba(5, 5, 12, 0.9) !important;
@@ -53,9 +58,10 @@ st.markdown(f"""
         border-radius: 5px !important;
         box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
         z-index: 99999 !important;
+        top: 10px !important;
     }}
     
-    /* 1. Background (Fixed for Mobile) */
+    /* 1. Background */
     .stApp {{
         background-color: #050510;
         background-image: 
@@ -63,11 +69,10 @@ st.markdown(f"""
             url('data:image/jpeg;base64,{bg_image_base64}');
         background-size: cover;
         background-position: center;
-        background-attachment: fixed; /* Desktop only */
+        background-attachment: fixed;
         overflow-x: hidden;
     }}
 
-    /* Animated Cyber Grid Overlay */
     .stApp::before {{
         content: "";
         position: fixed;
@@ -151,6 +156,7 @@ st.markdown(f"""
         text-shadow: 0 0 10px #e85d04, 0 0 20px #c1272d, 0 0 40px #c1272d;
         letter-spacing: 2px;
         text-align: center;
+        white-space: nowrap; /* Prevents text from breaking into 3 lines */
     }}
 
     /* 3. Futuristic Chat Bubbles */
@@ -221,60 +227,62 @@ st.markdown(f"""
     /* MOBILE OPTIMIZATION (Preventing Glitches) */
     /* ========================================================= */
     @media (max-width: 768px) {{
-        /* 1. Fix the iOS background zoom glitch */
         .stApp {{
             background-attachment: scroll !important; 
         }}
 
-        /* 2. Scale HUD Rings using vmin (viewport minimum) so they always fit */
-        .hud-wrapper {{
-            height: 40vmin; /* Scales dynamically with screen size */
-            margin-bottom: 1rem;
-            margin-top: 1rem;
+        /* Fix Layout Spacing */
+        .block-container {{
+            padding-top: 1rem !important;
+            padding-bottom: 1rem !important;
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
         }}
-        .hud-ring-outer {{ width: 45vmin; height: 45vmin; }}
-        .hud-ring-mid {{ width: 38vmin; height: 38vmin; }}
-        .hud-ring-inner {{ width: 32vmin; height: 32vmin; }}
-        .hud-core {{ width: 24vmin; height: 24vmin; }}
 
-        /* 3. Scale Text */
+        /* Perfectly scale HUD Rings */
+        .hud-wrapper {{
+            height: 220px;
+            margin-bottom: 0.5rem;
+            margin-top: 0.5rem;
+        }}
+        .hud-ring-outer {{ width: 200px; height: 200px; }}
+        .hud-ring-mid {{ width: 170px; height: 170px; }}
+        .hud-ring-inner {{ width: 140px; height: 140px; }}
+        .hud-core {{ width: 120px; height: 120px; }}
+
+        /* Scale Text down perfectly */
         .header-title {{ 
-            font-size: 5vmin; 
+            font-size: 1.5rem; /* Fits inside the circle */
             letter-spacing: 1px; 
         }}
         .subtitle {{ 
-            font-size: 2.5vmin; 
+            font-size: 0.65rem; 
             letter-spacing: 2px; 
-            margin-bottom: 1rem; 
+            margin-bottom: 1.5rem; 
         }}
         
-        /* 4. Fix Chat Bubble spacing for mobile keyboards */
+        /* Fix Chat Bubbles */
         [data-testid="stChatMessage"] {{
             padding: 0.8rem !important;
             margin-bottom: 0.8rem !important;
             border-left-width: 3px !important;
         }}
         [data-testid="stChatMessage"] p {{
-            font-size: 0.95rem !important;
+            font-size: 1rem !important;
             line-height: 1.4 !important;
         }}
 
-        /* 5. Adjust Chat Input for mobile keyboard */
+        /* Fix Chat Input */
         [data-testid="stChatInput"] {{
             border-radius: 8px !important;
-            margin-bottom: 10px !important;
+            margin-bottom: 0px !important;
         }}
         [data-testid="stChatInput"] textarea {{
-            font-size: 16px !important; /* Prevents iOS auto-zoom on focus */
-            padding: 10px !important;
-        }}
-        
-        /* 6. Remove excess padding from Streamlit main block */
-        .block-container {{
-            padding-top: 1rem !important;
-            padding-bottom: 2rem !important;
-            padding-left: 1rem !important;
-            padding-right: 1rem !important;
+            font-size: 16px !important; /* Stops iOS from zooming in */
+            padding: 12px 10px !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
         }}
     }}
     </style>
@@ -366,14 +374,15 @@ st.session_state["store"] = store
 if "messages" not in st.session_state or len(st.session_state.messages) == 0:
     st.session_state.messages = []
     with st.chat_message("assistant", avatar="🛕"):
-        st.markdown("**SYSTEM INITIALIZED.** Namaskar, I am Jagan. How may I assist you with your research, code, or inquiries about Odisha?")
+        st.markdown("**SYSTEM INITIALIZED.** Namaskar, I am Jagan. How may I assist you?")
 
 for message in st.session_state.messages:
     avatar = "🧑‍💻" if message["role"] == "user" else "🛕"
     with st.chat_message(message["role"], avatar=avatar):
         st.markdown(message["content"])
 
-if prompt := st.chat_input("ENTER COMMAND OR QUERY (ENGLISH / ଓଡ଼ିଆ)..."):
+# Shortened placeholder text for mobile
+if prompt := st.chat_input("Ask Jagan (English / ଓଡ଼ିଆ)..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user", avatar="🧑‍💻"):
         st.markdown(prompt)
