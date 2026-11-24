@@ -21,12 +21,12 @@ def get_base64_image(image_path):
         with open(image_path, "rb") as img_file:
             return base64.b64encode(img_file.read()).decode()
     except FileNotFoundError:
-        return "" # Fallback if image is missing
+        return "" 
 
 # Load your new image (make sure it is named bg.jpg and in the same folder)
 bg_image_base64 = get_base64_image("bg.jpg")
 
-# --- CUSTOM CSS FOR FUTURISTIC HUD THEME ---
+# --- CUSTOM CSS FOR FUTURISTIC HUD THEME & MOBILE RESPONSIVENESS ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600&display=swap');
@@ -35,9 +35,22 @@ st.markdown(f"""
         font-family: 'Rajdhani', sans-serif;
     }}
 
-    header[data-testid="stHeader"] {{ display: none !important; }}
-    footer {{ display: none !important; }}
+    /* Keep the sidebar toggle visible on mobile, but hide other standard headers */
+    header[data-testid="stHeader"] {{
+        background: transparent !important;
+    }}
+    .stDeployButton {{ display: none !important; }}
     #MainMenu {{ display: none !important; }}
+    footer {{ display: none !important; }}
+    
+    /* Ensure the hamburger menu for the sidebar is highly visible on mobile */
+    [data-testid="collapsedControl"] {{
+        color: #00ffff !important;
+        background: rgba(5, 5, 12, 0.9) !important;
+        border: 1px solid #00ffff !important;
+        border-radius: 5px !important;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }}
     
     /* 1. Deep Space Background with Cyber Grid and Your Custom Image */
     .stApp {{
@@ -198,6 +211,41 @@ st.markdown(f"""
         letter-spacing: 4px;
         margin-bottom: 3rem;
         text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }}
+
+    /* ========================================================= */
+    /* MOBILE RESPONSIVENESS (Screens smaller than 768px) */
+    /* ========================================================= */
+    @media (max-width: 768px) {{
+        /* Fix iOS background scrolling bug */
+        .stApp {{
+            background-attachment: scroll !important;
+        }}
+
+        /* Shrink the HUD Rings */
+        .hud-wrapper {{ height: 220px; margin-bottom: 1rem; }}
+        .hud-ring-outer {{ width: 200px; height: 200px; }}
+        .hud-ring-mid {{ width: 170px; height: 170px; }}
+        .hud-ring-inner {{ width: 140px; height: 140px; }}
+        .hud-core {{ width: 110px; height: 110px; }}
+
+        /* Scale down fonts */
+        .header-title {{ font-size: 1.5rem; letter-spacing: 1px; }}
+        .subtitle {{ font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 2rem; }}
+        
+        /* Adjust Chat Bubbles */
+        [data-testid="stChatMessage"] {{
+            padding: 1rem !important;
+            margin-bottom: 1rem !important;
+        }}
+        [data-testid="stChatMessage"] p {{
+            font-size: 1rem; /* Smaller text for phone */
+        }}
+
+        /* Adjust Chat Input */
+        [data-testid="stChatInput"] textarea {{
+            font-size: 1rem;
+        }}
     }}
     </style>
 """, unsafe_allow_html=True)
