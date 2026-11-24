@@ -12,15 +12,16 @@ from jagan.tools import register_all
 from jagan.agent import Agent
 
 # --- PAGE CONFIGURATION ---
-st.set_page_config(page_title="Jagan AI | ଜୟ ଜଗନ୍ନାଥ", page_icon="🛕", layout="wide")
+st.set_page_config(page_title="JAGAN AI", page_icon="🛕", layout="wide")
 
-# --- CUSTOM CSS FOR DARK GLOW & ROTATING RING ---
+# --- CUSTOM CSS FOR FUTURISTIC HUD THEME ---
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+    /* Import Futuristic Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600&display=swap');
     
     html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif;
+        font-family: 'Rajdhani', sans-serif;
     }
 
     /* Hide Streamlit default header and footer */
@@ -28,133 +29,183 @@ st.markdown("""
     footer { display: none !important; }
     #MainMenu { display: none !important; }
     
-    /* 1. The Background Image with Dark Overlay */
+    /* 1. Deep Space Background with Cyber Grid and Temple */
     .stApp {
-        background-image: linear-gradient(rgba(10, 10, 15, 0.85), rgba(10, 10, 15, 0.95)), 
-                          url('https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Jagannath_Temple_Puri.jpg/1920px-Jagannath_Temple_Puri.jpg');
+        background-color: #050510;
+        background-image: 
+            linear-gradient(rgba(5, 5, 16, 0.8), rgba(5, 5, 16, 0.95)),
+            url('https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Jagannath_Temple_Puri.jpg/1920px-Jagannath_Temple_Puri.jpg');
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
+        overflow-x: hidden;
+    }
+
+    /* Animated Cyber Grid Overlay */
+    .stApp::before {
+        content: "";
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background-image: 
+            linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
+        background-size: 40px 40px;
+        animation: grid-move 10s linear infinite;
+        z-index: -1;
+        pointer-events: none;
+    }
+
+    @keyframes grid-move {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(40px); }
     }
     
-    /* 2. Force Light Text globally for Dark Mode */
-    p, h1, h2, h3, h4, h5, h6, label, .stMarkdown {
-        color: #f8f9fa !important;
-    }
-    
-    /* 3. The Header with Rotating Ring */
-    .header-wrapper {
+    /* 2. Massive HUD Header */
+    .hud-wrapper {
         display: flex;
         justify-content: center;
         align-items: center;
         position: relative;
-        height: 250px;
+        height: 350px;
         margin-bottom: 2rem;
     }
 
-    /* Rotating Ring Animation */
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+    /* The Massive Rings */
+    @keyframes spin-cw { 100% { transform: rotate(360deg); } }
+    @keyframes spin-ccw { 100% { transform: rotate(-360deg); } }
+    @keyframes pulse { 
+        0% { box-shadow: 0 0 20px #e85d04, inset 0 0 20px #e85d04; }
+        50% { box-shadow: 0 0 60px #e85d04, inset 0 0 40px #e85d04; }
+        100% { box-shadow: 0 0 20px #e85d04, inset 0 0 20px #e85d04; }
     }
 
-    .glowing-ring {
+    .hud-ring-outer {
         position: absolute;
-        width: 220px;
-        height: 220px;
+        width: 320px; height: 320px;
+        border-radius: 50%;
+        border: 2px dashed rgba(0, 255, 255, 0.4);
+        animation: spin-cw 15s linear infinite;
+    }
+
+    .hud-ring-mid {
+        position: absolute;
+        width: 280px; height: 280px;
         border-radius: 50%;
         border: 3px solid transparent;
         border-top: 3px solid #e85d04;
-        border-left: 3px solid #c1272d;
-        box-shadow: 0 0 25px rgba(232, 93, 4, 0.6), inset 0 0 25px rgba(193, 39, 45, 0.6);
-        animation: spin 6s linear infinite;
-        z-index: 0;
-    }
-    
-    .glowing-ring-inner {
-        position: absolute;
-        width: 180px;
-        height: 180px;
-        border-radius: 50%;
-        border: 2px dashed rgba(255, 255, 255, 0.3);
-        animation: spin 10s linear infinite reverse;
-        z-index: 0;
+        border-bottom: 3px solid #c1272d;
+        animation: spin-ccw 8s linear infinite;
     }
 
-    .header-text {
-        z-index: 1;
-        text-align: center;
-        background: rgba(0, 0, 0, 0.5);
-        padding: 20px 40px;
+    .hud-ring-inner {
+        position: absolute;
+        width: 240px; height: 240px;
         border-radius: 50%;
-        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        animation: spin-cw 20s linear infinite;
+    }
+
+    /* Glowing Core and Text */
+    .hud-core {
+        position: absolute;
+        width: 180px; height: 180px;
+        border-radius: 50%;
+        background: rgba(232, 93, 4, 0.1);
+        animation: pulse 3s infinite alternate;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1;
     }
 
     .header-title {
+        font-family: 'Orbitron', sans-serif;
         color: #ffffff !important;
-        font-size: 3rem;
+        font-size: 2.8rem;
         font-weight: 800 !important;
         margin: 0;
-        text-shadow: 0 0 15px rgba(232, 93, 4, 0.8), 0 0 30px rgba(193, 39, 45, 0.6);
+        text-shadow: 0 0 10px #e85d04, 0 0 20px #c1272d, 0 0 40px #c1272d;
+        letter-spacing: 2px;
     }
-    
-    /* 4. Chat Bubbles (Glassmorphism) */
+
+    /* 3. Futuristic Chat Bubbles (Holographic) */
     [data-testid="stChatMessage"] {
-        background: rgba(30, 30, 40, 0.6) !important;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 15px !important;
-        padding: 1.2rem !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
-        margin-bottom: 1rem !important;
+        background: rgba(10, 15, 30, 0.7) !important;
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(0, 255, 255, 0.2) !important;
+        border-left: 4px solid #e85d04 !important; /* Orange left bar */
+        border-radius: 0px 15px 15px 0px !important; /* Cut corner look */
+        box-shadow: 0 0 15px rgba(0,0,0,0.8), inset 0 0 10px rgba(0,255,255,0.1) !important;
+        margin-bottom: 1.5rem !important;
+        padding: 1.5rem !important;
+        transition: all 0.3s ease;
+    }
+
+    [data-testid="stChatMessage"]:hover {
+        box-shadow: 0 0 20px rgba(232, 93, 4, 0.4), inset 0 0 20px rgba(0,255,255,0.2) !important;
+        border-color: rgba(232, 93, 4, 0.8) !important;
     }
     
     [data-testid="stChatMessage"] p {
-        color: #e0e0e0 !important;
-        font-weight: 400 !important;
-        font-size: 1.05rem;
+        color: #d1e8ff !important; /* Ice blue text for readability */
+        font-weight: 500 !important;
+        font-size: 1.15rem;
+        line-height: 1.5;
     }
 
-    /* 5. Sidebar (Dark Glass) */
+    /* 4. Sidebar HUD */
     [data-testid="stSidebar"] {
-        background-color: rgba(15, 15, 20, 0.9) !important;
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(15px);
+        background-color: rgba(5, 5, 12, 0.95) !important;
+        border-right: 2px solid rgba(0, 255, 255, 0.3);
+        box-shadow: 10px 0 30px rgba(0,0,0,0.8);
     }
     [data-testid="stSidebar"] * {
-        color: #e0e0e0 !important;
+        color: #00ffff !important; /* Cyan text */
+        font-family: 'Rajdhani', sans-serif;
     }
     
-    /* 6. Chat Input Glow */
+    /* 5. Holographic Chat Input */
     [data-testid="stChatInput"] {
-        border-radius: 25px !important;
-        border: 1px solid rgba(232, 93, 4, 0.5) !important;
-        background-color: rgba(20, 20, 25, 0.8) !important;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 0 15px rgba(232, 93, 4, 0.2) !important;
+        border-radius: 5px !important;
+        border: 1px solid rgba(0, 255, 255, 0.5) !important;
+        background-color: rgba(5, 10, 20, 0.9) !important;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.2) !important;
     }
     [data-testid="stChatInput"] textarea {
         color: #ffffff !important;
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 1.1rem;
     }
     [data-testid="stChatInput"]:focus-within {
         border-color: #e85d04 !important;
-        box-shadow: 0 0 25px rgba(232, 93, 4, 0.6) !important;
+        box-shadow: 0 0 30px rgba(232, 93, 4, 0.6) !important;
+    }
+    
+    /* Subtitle */
+    .subtitle {
+        text-align: center; 
+        color: #00ffff !important; 
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1rem;
+        letter-spacing: 4px;
+        margin-bottom: 3rem;
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- HEADER WITH ROTATING RING ---
+# --- MASSIVE HUD HEADER ---
 st.markdown("""
-    <div class="header-wrapper">
-        <div class="glowing-ring"></div>
-        <div class="glowing-ring-inner"></div>
-        <div class="header-text">
-            <h1 class="header-title">🛕 Jagan AI</h1>
+    <div class="hud-wrapper">
+        <div class="hud-ring-outer"></div>
+        <div class="hud-ring-mid"></div>
+        <div class="hud-ring-inner"></div>
+        <div class="hud-core">
+            <h1 class="header-title">JAGAN AI</h1>
         </div>
     </div>
+    <div class="subtitle">ଜୟ ଜଗନ୍ନାଥ | ODISHA INTELLIGENCE SYSTEM</div>
 """, unsafe_allow_html=True)
-
-st.markdown("<p style='text-align: center; color: #ffb703 !important; font-weight: 600; letter-spacing: 2px;'>ଜୟ ଜଗନ୍ନାଥ | YOUR INTELLIGENT ODISHA ASSISTANT</p>", unsafe_allow_html=True)
 
 # --- HIDDEN CONFIGURATION ---
 try:
@@ -167,15 +218,15 @@ model_name = "openai/gpt-oss-120b"
 
 # --- SIDEBAR (Knowledge Base Only) ---
 with st.sidebar:
-    st.markdown("### 🛕 Jagan AI")
+    st.markdown("### ⚡ SYSTEM CONFIG")
     st.markdown("---")
     
-    with st.expander("📚 Odisha Knowledge Base", expanded=False):
-        st.info("Upload .txt files to teach Jagan about Odisha.")
+    with st.expander("📚 ODISHA DATABASE", expanded=False):
+        st.info("Upload .txt files to sync with the core database.")
         uploaded_files = st.file_uploader("Upload text files", type=["txt"], accept_multiple_files=True, label_visibility="collapsed")
         
-        if st.button("Index Files", use_container_width=True) and uploaded_files:
-            with st.spinner("Indexing..."):
+        if st.button("INITIALIZE SYNC", use_container_width=True) and uploaded_files:
+            with st.spinner("Syncing data..."):
                 data_dir = Path("odisha_knowledge")
                 data_dir.mkdir(exist_ok=True)
                 
@@ -186,9 +237,9 @@ with st.sidebar:
                 
                 if st.session_state.get("store"):
                     ingest(data_dir, st.session_state["store"])
-                    st.success(f"Indexed {len(uploaded_files)} files!")
+                    st.success(f"SYNCED {len(uploaded_files)} FILES.")
                 else:
-                    st.error("Vector store not initialized.")
+                    st.error("ERROR: Vector store offline.")
 
 # --- INITIALIZE BACKEND ---
 @st.cache_resource
@@ -219,7 +270,7 @@ def get_agent(api_key, base_url, model_name):
     return Agent(llm, reg, mem, cfg), store
 
 if not api_key:
-    st.error("⚠️ API Key not found. Please configure `GROQ_API_KEY` in your Streamlit Secrets.")
+    st.error("⚠️ SYSTEM OFFLINE: API Key missing in secrets.")
     st.stop()
 
 agent, store = get_agent(api_key, base_url, model_name)
@@ -228,26 +279,24 @@ st.session_state["store"] = store
 # --- CHAT INTERFACE ---
 if "messages" not in st.session_state or len(st.session_state.messages) == 0:
     st.session_state.messages = []
-    with st.chat_message("assistant", avatar="🤖"):
-        st.markdown("ନମସ୍କାର! (Namaskar!) I am **Jagan**. "
-                    "I can help you write code, research topics, and learn about Odisha's rich culture. "
-                    "How can I help you today?")
+    with st.chat_message("assistant", avatar="🛕"):
+        st.markdown("**SYSTEM INITIALIZED.** Namaskar, I am Jagan. How may I assist you with your research, code, or inquiries about Odisha?")
 
 for message in st.session_state.messages:
-    avatar = "🧑‍💻" if message["role"] == "user" else "🤖"
+    avatar = "🧑‍💻" if message["role"] == "user" else "🛕"
     with st.chat_message(message["role"], avatar=avatar):
         st.markdown(message["content"])
 
-if prompt := st.chat_input("Ask Jagan anything (English or ଓଡ଼ିଆ)..."):
+if prompt := st.chat_input("ENTER COMMAND OR QUERY (ENGLISH / ଓଡ଼ିଆ)..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user", avatar="🧑‍💻"):
         st.markdown(prompt)
 
-    with st.chat_message("assistant", avatar="🤖"):
-        with st.spinner("Jagan is thinking..."):
+    with st.chat_message("assistant", avatar="🛕"):
+        with st.spinner("PROCESSING..."):
             tool_log = []
             def on_tool(name, args):
-                tool_log.append(f"🛠️ Used tool: `{name}`")
+                tool_log.append(f"⚙️ EXECUTED: `{name}`")
 
             try:
                 if store:
@@ -256,7 +305,7 @@ if prompt := st.chat_input("Ask Jagan anything (English or ଓଡ଼ିଆ)...")
                 response = agent.step(prompt, on_tool)
                 
                 if tool_log:
-                    with st.expander("View Tool Execution"):
+                    with st.expander("🖥️ SYSTEM LOGS"):
                         for log in tool_log:
                             st.write(log)
                             
@@ -264,4 +313,4 @@ if prompt := st.chat_input("Ask Jagan anything (English or ଓଡ଼ିଆ)...")
                 st.session_state.messages.append({"role": "assistant", "content": response})
                 
             except Exception as e:
-                st.error(f"Error: {str(e)}")
+                st.error(f"SYSTEM ERROR: {str(e)}")
