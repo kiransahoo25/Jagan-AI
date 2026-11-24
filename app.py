@@ -25,42 +25,37 @@ def get_base64_image(image_path):
 
 bg_image_base64 = get_base64_image("bg.jpg")
 
-# --- CUSTOM CSS FOR FUTURISTIC HUD THEME & MOBILE RESPONSIVENESS ---
+# --- CUSTOM CSS FOR FUTURISTIC HUD THEME & MOBILE OPTIMIZATION ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600&display=swap');
     
     html, body, [class*="css"] {{
         font-family: 'Rajdhani', sans-serif;
+        overflow-x: hidden !important; /* Stop horizontal shaking */
     }}
 
     /* ========================================================= */
-    /* HIDE STREAMLIT & GITHUB BRANDING */
+    /* HIDE BRANDING (Safely for mobile) */
     /* ========================================================= */
-    header[data-testid="stHeader"] {{ display: none !important; }}
-    #MainMenu {{ visibility: hidden !important; }}
-    footer {{ visibility: hidden !important; }}
+    header[data-testid="stHeader"] {{
+        background: transparent !important;
+    }}
+    #MainMenu, footer, [data-testid="stToolbar"], .stDeployButton, [data-testid="stAppDeployButton"] {{
+        display: none !important;
+    }}
     
-    /* Hide the top-right toolbar (GitHub icon, Share, Edit, etc.) */
-    [data-testid="stToolbar"] {{ display: none !important; }}
-    [data-testid="stDecoration"] {{ display: none !important; }}
-    [data-testid="stStatusWidget"] {{ display: none !important; }}
-    
-    /* Hide the Deploy button and Manage app button */
-    .stDeployButton {{ display: none !important; }}
-    [data-testid="stAppDeployButton"] {{ display: none !important; }}
-    [data-testid="manage-app-button"] {{ display: none !important; }}
-    
-    /* Keep the mobile sidebar toggle visible even though header is hidden */
+    /* Make sure the sidebar toggle is visible and glowing on mobile */
     [data-testid="collapsedControl"] {{
         color: #00ffff !important;
         background: rgba(5, 5, 12, 0.9) !important;
         border: 1px solid #00ffff !important;
         border-radius: 5px !important;
         box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        z-index: 99999 !important;
     }}
     
-    /* 1. Deep Space Background with Cyber Grid and Your Custom Image */
+    /* 1. Background (Fixed for Mobile) */
     .stApp {{
         background-color: #050510;
         background-image: 
@@ -68,7 +63,7 @@ st.markdown(f"""
             url('data:image/jpeg;base64,{bg_image_base64}');
         background-size: cover;
         background-position: center;
-        background-attachment: fixed;
+        background-attachment: fixed; /* Desktop only */
         overflow-x: hidden;
     }}
 
@@ -155,6 +150,7 @@ st.markdown(f"""
         margin: 0;
         text-shadow: 0 0 10px #e85d04, 0 0 20px #c1272d, 0 0 40px #c1272d;
         letter-spacing: 2px;
+        text-align: center;
     }}
 
     /* 3. Futuristic Chat Bubbles */
@@ -222,20 +218,64 @@ st.markdown(f"""
     }}
 
     /* ========================================================= */
-    /* MOBILE RESPONSIVENESS */
+    /* MOBILE OPTIMIZATION (Preventing Glitches) */
     /* ========================================================= */
     @media (max-width: 768px) {{
-        .stApp {{ background-attachment: scroll !important; }}
-        .hud-wrapper {{ height: 220px; margin-bottom: 1rem; }}
-        .hud-ring-outer {{ width: 200px; height: 200px; }}
-        .hud-ring-mid {{ width: 170px; height: 170px; }}
-        .hud-ring-inner {{ width: 140px; height: 140px; }}
-        .hud-core {{ width: 110px; height: 110px; }}
-        .header-title {{ font-size: 1.5rem; letter-spacing: 1px; }}
-        .subtitle {{ font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 2rem; }}
-        [data-testid="stChatMessage"] {{ padding: 1rem !important; margin-bottom: 1rem !important; }}
-        [data-testid="stChatMessage"] p {{ font-size: 1rem; }}
-        [data-testid="stChatInput"] textarea {{ font-size: 1rem; }}
+        /* 1. Fix the iOS background zoom glitch */
+        .stApp {{
+            background-attachment: scroll !important; 
+        }}
+
+        /* 2. Scale HUD Rings using vmin (viewport minimum) so they always fit */
+        .hud-wrapper {{
+            height: 40vmin; /* Scales dynamically with screen size */
+            margin-bottom: 1rem;
+            margin-top: 1rem;
+        }}
+        .hud-ring-outer {{ width: 45vmin; height: 45vmin; }}
+        .hud-ring-mid {{ width: 38vmin; height: 38vmin; }}
+        .hud-ring-inner {{ width: 32vmin; height: 32vmin; }}
+        .hud-core {{ width: 24vmin; height: 24vmin; }}
+
+        /* 3. Scale Text */
+        .header-title {{ 
+            font-size: 5vmin; 
+            letter-spacing: 1px; 
+        }}
+        .subtitle {{ 
+            font-size: 2.5vmin; 
+            letter-spacing: 2px; 
+            margin-bottom: 1rem; 
+        }}
+        
+        /* 4. Fix Chat Bubble spacing for mobile keyboards */
+        [data-testid="stChatMessage"] {{
+            padding: 0.8rem !important;
+            margin-bottom: 0.8rem !important;
+            border-left-width: 3px !important;
+        }}
+        [data-testid="stChatMessage"] p {{
+            font-size: 0.95rem !important;
+            line-height: 1.4 !important;
+        }}
+
+        /* 5. Adjust Chat Input for mobile keyboard */
+        [data-testid="stChatInput"] {{
+            border-radius: 8px !important;
+            margin-bottom: 10px !important;
+        }}
+        [data-testid="stChatInput"] textarea {{
+            font-size: 16px !important; /* Prevents iOS auto-zoom on focus */
+            padding: 10px !important;
+        }}
+        
+        /* 6. Remove excess padding from Streamlit main block */
+        .block-container {{
+            padding-top: 1rem !important;
+            padding-bottom: 2rem !important;
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }}
     }}
     </style>
 """, unsafe_allow_html=True)
