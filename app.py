@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import base64
 from pathlib import Path
 
 # Import Jagan's core components
@@ -14,31 +15,44 @@ from jagan.agent import Agent
 # --- PAGE CONFIGURATION ---
 st.set_page_config(page_title="JAGAN AI", page_icon="🛕", layout="wide")
 
+# --- HELPER FUNCTION TO LOAD BACKGROUND IMAGE ---
+def get_base64_image(image_path):
+    try:
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+    except FileNotFoundError:
+        return "" # Fallback if image is missing
+
+# Load your new image (make sure it is named bg.jpg and in the same folder)
+bg_image_base64 = get_base64_image("bg.jpg")
+
 # --- CUSTOM CSS FOR FUTURISTIC HUD THEME ---
-st.markdown("""
+st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600&display=swap');
     
-    html, body, [class*="css"] {
+    html, body, [class*="css"] {{
         font-family: 'Rajdhani', sans-serif;
-    }
+    }}
 
-    header[data-testid="stHeader"] { display: none !important; }
-    footer { display: none !important; }
-    #MainMenu { display: none !important; }
+    header[data-testid="stHeader"] {{ display: none !important; }}
+    footer {{ display: none !important; }}
+    #MainMenu {{ display: none !important; }}
     
-    .stApp {
+    /* 1. Deep Space Background with Cyber Grid and Your Custom Image */
+    .stApp {{
         background-color: #050510;
         background-image: 
-            linear-gradient(rgba(5, 5, 16, 0.8), rgba(5, 5, 16, 0.95)),
-            url('https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Jagannath_Temple_Puri.jpg/1920px-Jagannath_Temple_Puri.jpg');
+            linear-gradient(rgba(5, 5, 16, 0.85), rgba(5, 5, 16, 0.95)),
+            url('data:image/jpeg;base64,{bg_image_base64}');
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
         overflow-x: hidden;
-    }
+    }}
 
-    .stApp::before {
+    /* Animated Cyber Grid Overlay */
+    .stApp::before {{
         content: "";
         position: fixed;
         top: 0; left: 0; width: 100vw; height: 100vh;
@@ -49,39 +63,40 @@ st.markdown("""
         animation: grid-move 10s linear infinite;
         z-index: -1;
         pointer-events: none;
-    }
+    }}
 
-    @keyframes grid-move {
-        0% { transform: translateY(0); }
-        100% { transform: translateY(40px); }
-    }
+    @keyframes grid-move {{
+        0% {{ transform: translateY(0); }}
+        100% {{ transform: translateY(40px); }}
+    }}
     
-    .hud-wrapper {
+    /* 2. Massive HUD Header */
+    .hud-wrapper {{
         display: flex;
         justify-content: center;
         align-items: center;
         position: relative;
         height: 350px;
         margin-bottom: 2rem;
-    }
+    }}
 
-    @keyframes spin-cw { 100% { transform: rotate(360deg); } }
-    @keyframes spin-ccw { 100% { transform: rotate(-360deg); } }
-    @keyframes pulse { 
-        0% { box-shadow: 0 0 20px #e85d04, inset 0 0 20px #e85d04; }
-        50% { box-shadow: 0 0 60px #e85d04, inset 0 0 40px #e85d04; }
-        100% { box-shadow: 0 0 20px #e85d04, inset 0 0 20px #e85d04; }
-    }
+    @keyframes spin-cw {{ 100% {{ transform: rotate(360deg); }} }}
+    @keyframes spin-ccw {{ 100% {{ transform: rotate(-360deg); }} }}
+    @keyframes pulse {{ 
+        0% {{ box-shadow: 0 0 20px #e85d04, inset 0 0 20px #e85d04; }}
+        50% {{ box-shadow: 0 0 60px #e85d04, inset 0 0 40px #e85d04; }}
+        100% {{ box-shadow: 0 0 20px #e85d04, inset 0 0 20px #e85d04; }}
+    }}
 
-    .hud-ring-outer {
+    .hud-ring-outer {{
         position: absolute;
         width: 320px; height: 320px;
         border-radius: 50%;
         border: 2px dashed rgba(0, 255, 255, 0.4);
         animation: spin-cw 15s linear infinite;
-    }
+    }}
 
-    .hud-ring-mid {
+    .hud-ring-mid {{
         position: absolute;
         width: 280px; height: 280px;
         border-radius: 50%;
@@ -89,17 +104,17 @@ st.markdown("""
         border-top: 3px solid #e85d04;
         border-bottom: 3px solid #c1272d;
         animation: spin-ccw 8s linear infinite;
-    }
+    }}
 
-    .hud-ring-inner {
+    .hud-ring-inner {{
         position: absolute;
         width: 240px; height: 240px;
         border-radius: 50%;
         border: 1px solid rgba(255, 255, 255, 0.2);
         animation: spin-cw 20s linear infinite;
-    }
+    }}
 
-    .hud-core {
+    .hud-core {{
         position: absolute;
         width: 180px; height: 180px;
         border-radius: 50%;
@@ -109,9 +124,9 @@ st.markdown("""
         justify-content: center;
         align-items: center;
         z-index: 1;
-    }
+    }}
 
-    .header-title {
+    .header-title {{
         font-family: 'Orbitron', sans-serif;
         color: #ffffff !important;
         font-size: 2.8rem;
@@ -119,9 +134,10 @@ st.markdown("""
         margin: 0;
         text-shadow: 0 0 10px #e85d04, 0 0 20px #c1272d, 0 0 40px #c1272d;
         letter-spacing: 2px;
-    }
+    }}
 
-    [data-testid="stChatMessage"] {
+    /* 3. Futuristic Chat Bubbles */
+    [data-testid="stChatMessage"] {{
         background: rgba(10, 15, 30, 0.7) !important;
         backdrop-filter: blur(12px);
         border: 1px solid rgba(0, 255, 255, 0.2) !important;
@@ -131,47 +147,50 @@ st.markdown("""
         margin-bottom: 1.5rem !important;
         padding: 1.5rem !important;
         transition: all 0.3s ease;
-    }
+    }}
 
-    [data-testid="stChatMessage"]:hover {
+    [data-testid="stChatMessage"]:hover {{
         box-shadow: 0 0 20px rgba(232, 93, 4, 0.4), inset 0 0 20px rgba(0,255,255,0.2) !important;
         border-color: rgba(232, 93, 4, 0.8) !important;
-    }
+    }}
     
-    [data-testid="stChatMessage"] p {
+    [data-testid="stChatMessage"] p {{
         color: #d1e8ff !important;
         font-weight: 500 !important;
         font-size: 1.15rem;
         line-height: 1.5;
-    }
+    }}
 
-    [data-testid="stSidebar"] {
+    /* 4. Sidebar HUD */
+    [data-testid="stSidebar"] {{
         background-color: rgba(5, 5, 12, 0.95) !important;
         border-right: 2px solid rgba(0, 255, 255, 0.3);
         box-shadow: 10px 0 30px rgba(0,0,0,0.8);
-    }
-    [data-testid="stSidebar"] * {
+    }}
+    [data-testid="stSidebar"] * {{
         color: #00ffff !important;
         font-family: 'Rajdhani', sans-serif;
-    }
+    }}
     
-    [data-testid="stChatInput"] {
+    /* 5. Holographic Chat Input */
+    [data-testid="stChatInput"] {{
         border-radius: 5px !important;
         border: 1px solid rgba(0, 255, 255, 0.5) !important;
         background-color: rgba(5, 10, 20, 0.9) !important;
         box-shadow: 0 0 20px rgba(0, 255, 255, 0.2) !important;
-    }
-    [data-testid="stChatInput"] textarea {
+    }}
+    [data-testid="stChatInput"] textarea {{
         color: #ffffff !important;
         font-family: 'Rajdhani', sans-serif;
         font-size: 1.1rem;
-    }
-    [data-testid="stChatInput"]:focus-within {
+    }}
+    [data-testid="stChatInput"]:focus-within {{
         border-color: #e85d04 !important;
         box-shadow: 0 0 30px rgba(232, 93, 4, 0.6) !important;
-    }
+    }}
     
-    .subtitle {
+    /* Subtitle */
+    .subtitle {{
         text-align: center; 
         color: #00ffff !important; 
         font-family: 'Orbitron', sans-serif;
@@ -179,7 +198,7 @@ st.markdown("""
         letter-spacing: 4px;
         margin-bottom: 3rem;
         text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-    }
+    }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -293,8 +312,6 @@ if prompt := st.chat_input("ENTER COMMAND OR QUERY (ENGLISH / ଓଡ଼ିଆ)..
                 
                 response = agent.step(prompt, on_tool)
                 
-                # (The SYSTEM LOGS expander code has been removed from here)
-
                 st.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
                 
