@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.db
+odisha_knowledge/
+.DS_Store
+*.pyc
