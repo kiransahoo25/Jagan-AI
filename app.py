@@ -36,19 +36,33 @@ st.markdown(f"""
     }}
 
     /* ========================================================= */
-    /* HIDE ALL STREAMLIT BRANDING & BOTTOM BARS */
+    /* HIDE BRANDING (Safely for mobile) */
     /* ========================================================= */
     header[data-testid="stHeader"] {{ background: transparent !important; }}
     
+    /* Hide only the specific buttons, NOT the whole bottom container */
     #MainMenu, footer, [data-testid="stToolbar"], .stDeployButton, 
-    [data-testid="stAppDeployButton"], [data-testid="manage-app-button"],
-    [data-testid="stBottom"] {{ 
+    [data-testid="stAppDeployButton"], [data-testid="manage-app-button"] {{ 
         display: none !important; 
     }}
     
-    /* Hide the new Streamlit bottom floating bar */
-    div[data-testid="stAppViewBlockContainer"] > div:last-child {{
-        display: none !important;
+    /* Make SURE the chat input is visible and glowing */
+    [data-testid="stChatInput"] {{
+        display: flex !important;
+        visibility: visible !important;
+        border-radius: 5px !important;
+        border: 1px solid rgba(0, 255, 255, 0.5) !important;
+        background-color: rgba(5, 10, 20, 0.95) !important;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.2) !important;
+    }}
+    [data-testid="stChatInput"] textarea {{
+        color: #ffffff !important;
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 1.1rem;
+    }}
+    [data-testid="stChatInput"]:focus-within {{
+        border-color: #e85d04 !important;
+        box-shadow: 0 0 30px rgba(232, 93, 4, 0.6) !important;
     }}
     
     [data-testid="collapsedControl"] {{
@@ -156,7 +170,7 @@ st.markdown(f"""
         text-shadow: 0 0 10px #e85d04, 0 0 20px #c1272d, 0 0 40px #c1272d;
         letter-spacing: 2px;
         text-align: center;
-        white-space: nowrap; /* Prevents text from breaking into 3 lines */
+        white-space: nowrap;
     }}
 
     /* 3. Futuristic Chat Bubbles */
@@ -195,23 +209,6 @@ st.markdown(f"""
         font-family: 'Rajdhani', sans-serif;
     }}
     
-    /* 5. Holographic Chat Input */
-    [data-testid="stChatInput"] {{
-        border-radius: 5px !important;
-        border: 1px solid rgba(0, 255, 255, 0.5) !important;
-        background-color: rgba(5, 10, 20, 0.9) !important;
-        box-shadow: 0 0 20px rgba(0, 255, 255, 0.2) !important;
-    }}
-    [data-testid="stChatInput"] textarea {{
-        color: #ffffff !important;
-        font-family: 'Rajdhani', sans-serif;
-        font-size: 1.1rem;
-    }}
-    [data-testid="stChatInput"]:focus-within {{
-        border-color: #e85d04 !important;
-        box-shadow: 0 0 30px rgba(232, 93, 4, 0.6) !important;
-    }}
-    
     /* Subtitle */
     .subtitle {{
         text-align: center; 
@@ -224,14 +221,11 @@ st.markdown(f"""
     }}
 
     /* ========================================================= */
-    /* MOBILE OPTIMIZATION (Preventing Glitches) */
+    /* MOBILE OPTIMIZATION */
     /* ========================================================= */
     @media (max-width: 768px) {{
-        .stApp {{
-            background-attachment: scroll !important; 
-        }}
+        .stApp {{ background-attachment: scroll !important; }}
 
-        /* Fix Layout Spacing */
         .block-container {{
             padding-top: 1rem !important;
             padding-bottom: 1rem !important;
@@ -239,7 +233,6 @@ st.markdown(f"""
             padding-right: 0.5rem !important;
         }}
 
-        /* Perfectly scale HUD Rings */
         .hud-wrapper {{
             height: 220px;
             margin-bottom: 0.5rem;
@@ -250,18 +243,9 @@ st.markdown(f"""
         .hud-ring-inner {{ width: 140px; height: 140px; }}
         .hud-core {{ width: 120px; height: 120px; }}
 
-        /* Scale Text down perfectly */
-        .header-title {{ 
-            font-size: 1.5rem; /* Fits inside the circle */
-            letter-spacing: 1px; 
-        }}
-        .subtitle {{ 
-            font-size: 0.65rem; 
-            letter-spacing: 2px; 
-            margin-bottom: 1.5rem; 
-        }}
+        .header-title {{ font-size: 1.5rem; letter-spacing: 1px; }}
+        .subtitle {{ font-size: 0.65rem; letter-spacing: 2px; margin-bottom: 1.5rem; }}
         
-        /* Fix Chat Bubbles */
         [data-testid="stChatMessage"] {{
             padding: 0.8rem !important;
             margin-bottom: 0.8rem !important;
@@ -272,17 +256,14 @@ st.markdown(f"""
             line-height: 1.4 !important;
         }}
 
-        /* Fix Chat Input */
+        /* Fix Chat Input for mobile keyboard */
         [data-testid="stChatInput"] {{
             border-radius: 8px !important;
-            margin-bottom: 0px !important;
+            margin-bottom: 5px !important;
         }}
         [data-testid="stChatInput"] textarea {{
-            font-size: 16px !important; /* Stops iOS from zooming in */
+            font-size: 16px !important; /* Stops iOS zoom */
             padding: 12px 10px !important;
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
         }}
     }}
     </style>
