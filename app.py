@@ -1,7 +1,6 @@
 import streamlit as st
 import os
 import base64
-import io
 from pathlib import Path
 from groq import Groq
 
@@ -28,7 +27,6 @@ def get_base64_image(image_path):
 bg_image_base64 = get_base64_image("bg.jpg")
 
 # --- CUSTOM CSS FOR FUTURISTIC HUD THEME & MOBILE OPTIMIZATION ---
-# (CSS remains identical to your previous working version)
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600&display=swap');
@@ -45,6 +43,7 @@ st.markdown(f"""
         display: none !important; 
     }}
     
+    /* Chat Input Styling */
     [data-testid="stChatInput"] {{
         display: flex !important;
         visibility: visible !important;
@@ -258,30 +257,24 @@ except Exception:
 base_url = "https://api.groq.com/openai/v1"
 model_name = "openai/gpt-oss-120b"
 
-# --- SIDEBAR (Knowledge Base Only) ---
+# --- SIDEBAR ---
 with st.sidebar:
     st.markdown("### ⚡ SYSTEM CONFIG")
     st.markdown("---")
-    
     with st.expander("📚 ODISHA DATABASE", expanded=False):
         st.info("Upload .txt files to sync with the core database.")
         uploaded_files = st.file_uploader("Upload text files", type=["txt"], accept_multiple_files=True, label_visibility="collapsed")
-        
         if st.button("INITIALIZE SYNC", use_container_width=True) and uploaded_files:
             with st.spinner("Syncing data..."):
                 data_dir = Path("odisha_knowledge")
                 data_dir.mkdir(exist_ok=True)
-                
                 for uploaded_file in uploaded_files:
                     file_path = data_dir / uploaded_file.name
                     with open(file_path, "wb") as f:
                         f.write(uploaded_file.getbuffer())
-                
                 if st.session_state.get("store"):
                     ingest(data_dir, st.session_state["store"])
                     st.success(f"SYNCED {len(uploaded_files)} FILES.")
-                else:
-                    st.error("ERROR: Vector store offline.")
 
 # --- INITIALIZE BACKEND ---
 @st.cache_resource
@@ -290,25 +283,20 @@ def get_agent(api_key, base_url, model_name):
     os.environ["JAGAN_BASE_URL"] = base_url
     os.environ["JAGAN_MODEL"] = model_name
     os.environ["JAGAN_CONFIRM"] = "0"
-
     cfg = load_config()
     llm = LLM(cfg)
     mem = Memory(cfg.home / "memory.db")
-    
     try:
         embed = make_embedder(cfg)
         store = VectorStore(cfg.home / "vectors.db", embed)
     except Exception:
         store = None
-
     reg = Registry()
     register_all(reg, cfg, mem, store)
-    
     if "run_shell" in reg.tools: del reg.tools["run_shell"]
     if "write_file" in reg.tools: del reg.tools["write_file"]
     if "edit_file" in reg.tools: del reg.tools["edit_file"]
     if "git_commit" in reg.tools: del reg.tools["git_commit"]
-
     return Agent(llm, reg, mem, cfg), store
 
 if not api_key:
@@ -318,23 +306,17 @@ if not api_key:
 agent, store = get_agent(api_key, base_url, model_name)
 st.session_state["store"] = store
 
-# --- NEW: AUDIO TRANSCRIPTION FUNCTION ---
+# --- AUDIO TRANSCRIPTION ---
 def transcribe_audio(audio_file, api_key):
-    """Uses Groq's Whisper API to transcribe audio."""
     try:
         client = Groq(api_key=api_key)
-        
-        # The audio_file from st.chat_input is a BytesIO object.
-        # Groq's API expects a tuple: (filename, file_bytes, mime_type)
         file_tuple = ("audio.wav", audio_file.getvalue(), "audio/wav")
-        
-        transcription = client.audio.transcriptions.create(
+        return client.audio.transcriptions.create(
             file=file_tuple,
             model="whisper-large-v3",
-            language="or", # Odia language code (use "en" for English only)
+            language="or",
             response_format="text"
         )
-        return transcription
     except Exception as e:
         st.error(f"Transcription Error: {e}")
         return None
@@ -343,64 +325,59 @@ def transcribe_audio(audio_file, api_key):
 if "messages" not in st.session_state or len(st.session_state.messages) == 0:
     st.session_state.messages = []
     with st.chat_message("assistant", avatar="🛕"):
-        st.markdown("**SYSTEM INITIALIZED.** Namaskar, I am Jagan. You can **type** or **speak** in English or Odia. How may I assist you?")
+        st.markdown("**SYSTEM INITIALIZED.** Namaskar, I am Jagan. You can **type** or **speak** in English or Odia.")
 
+# Render previous chat history
 for message in st.session_state.messages:
     avatar = "🧑‍💻" if message["role"] == "user" else "🛕"
     with st.chat_message(message["role"], avatar=avatar):
         st.markdown(message["content"])
 
-# --- UPDATED CHAT INPUT WITH AUDIO SUPPORT ---
-# accept_audio=True adds a microphone button next to the send button.
-chat_input_result = st.chat_input(
-    "Ask Jagan (English / ଓଡ଼ିଆ)...", 
-    accept_audio=True
-)
+# --- UPDATED CHAT INPUT (FIXED VISIBILITY) ---
+chat_input_result = st.chat_input("Ask Jagan (English / ଓଡ଼ିଆ)...", accept_audio=True)
 
 if chat_input_result:
     prompt = None
-    audio_file = None
-
-    # Check if the result contains audio or text
+    
+    # 1. Handle Audio Input
     if hasattr(chat_input_result, "audio") and chat_input_result.audio is not None:
         audio_file = chat_input_result.audio
-    elif hasattr(chat_input_result, "text") and chat_input_result.text:
-        prompt = chat_input_result.text
-    elif isinstance(chat_input_result, str):
-        prompt = chat_input_result # Fallback
-
-    # --- HANDLE AUDIO INPUT ---
-    if audio_file:
+        
+        # Display user bubble with audio
         with st.chat_message("user", avatar="🧑‍💻"):
-            st.audio(audio_file) # Show the recorded audio player
+            st.audio(audio_file)
             with st.spinner("🎙️ Transcribing..."):
                 prompt = transcribe_audio(audio_file, api_key)
-                if prompt:
-                    st.markdown(f"**Transcribed:** {prompt}")
-                else:
-                    st.error("Could not transcribe audio. Please try again.")
-                    st.stop()
+            if prompt:
+                st.markdown(f"_{prompt}_")
+            else:
+                st.error("Could not transcribe audio.")
+                st.stop()
+                
+    # 2. Handle Text Input
+    elif hasattr(chat_input_result, "text") and chat_input_result.text:
+        prompt = chat_input_result.text
+        # Display user bubble with text
+        with st.chat_message("user", avatar="🧑‍💻"):
+            st.markdown(prompt)
+            
+    elif isinstance(chat_input_result, str):
+        prompt = chat_input_result
+        with st.chat_message("user", avatar="🧑‍💻"):
+            st.markdown(prompt)
 
-    # --- PROCESS TEXT OR TRANSCRIBED PROMPT ---
+    # 3. Process the Prompt (Audio or Text)
     if prompt:
-        # Add user message to history
         st.session_state.messages.append({"role": "user", "content": prompt})
-
-        # Generate response
+        
         with st.chat_message("assistant", avatar="🛕"):
             with st.spinner("PROCESSING..."):
-                tool_log = []
-                def on_tool(name, args):
-                    tool_log.append(f"⚙️ EXECUTED: `{name}`")
-
                 try:
                     if store:
                         agent.reg.tools["search_docs"].fn.__globals__['store'] = store
                     
-                    response = agent.step(prompt, on_tool)
-                    
+                    response = agent.step(prompt)
                     st.markdown(response)
                     st.session_state.messages.append({"role": "assistant", "content": response})
-                    
                 except Exception as e:
                     st.error(f"SYSTEM ERROR: {str(e)}")
