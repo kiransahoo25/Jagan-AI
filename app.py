@@ -1,7 +1,9 @@
 import streamlit as st
 import os
 import base64
+import io
 from pathlib import Path
+from groq import Groq
 
 # Import Jagan's core components
 from jagan.config import load_config
@@ -26,6 +28,7 @@ def get_base64_image(image_path):
 bg_image_base64 = get_base64_image("bg.jpg")
 
 # --- CUSTOM CSS FOR FUTURISTIC HUD THEME & MOBILE OPTIMIZATION ---
+# (CSS remains identical to your previous working version)
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600&display=swap');
@@ -35,18 +38,13 @@ st.markdown(f"""
         overflow-x: hidden !important;
     }}
 
-    /* ========================================================= */
-    /* HIDE BRANDING (Safely for mobile) */
-    /* ========================================================= */
     header[data-testid="stHeader"] {{ background: transparent !important; }}
     
-    /* Hide only the specific buttons, NOT the whole bottom container */
     #MainMenu, footer, [data-testid="stToolbar"], .stDeployButton, 
     [data-testid="stAppDeployButton"], [data-testid="manage-app-button"] {{ 
         display: none !important; 
     }}
     
-    /* Make SURE the chat input is visible and glowing */
     [data-testid="stChatInput"] {{
         display: flex !important;
         visibility: visible !important;
@@ -75,7 +73,6 @@ st.markdown(f"""
         top: 10px !important;
     }}
     
-    /* 1. Background */
     .stApp {{
         background-color: #050510;
         background-image: 
@@ -105,7 +102,6 @@ st.markdown(f"""
         100% {{ transform: translateY(40px); }}
     }}
     
-    /* 2. Massive HUD Header */
     .hud-wrapper {{
         display: flex;
         justify-content: center;
@@ -173,7 +169,6 @@ st.markdown(f"""
         white-space: nowrap;
     }}
 
-    /* 3. Futuristic Chat Bubbles */
     [data-testid="stChatMessage"] {{
         background: rgba(10, 15, 30, 0.7) !important;
         backdrop-filter: blur(12px);
@@ -198,7 +193,6 @@ st.markdown(f"""
         line-height: 1.5;
     }}
 
-    /* 4. Sidebar HUD */
     [data-testid="stSidebar"] {{
         background-color: rgba(5, 5, 12, 0.95) !important;
         border-right: 2px solid rgba(0, 255, 255, 0.3);
@@ -209,7 +203,6 @@ st.markdown(f"""
         font-family: 'Rajdhani', sans-serif;
     }}
     
-    /* Subtitle */
     .subtitle {{
         text-align: center; 
         color: #00ffff !important; 
@@ -220,51 +213,25 @@ st.markdown(f"""
         text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
     }}
 
-    /* ========================================================= */
-    /* MOBILE OPTIMIZATION */
-    /* ========================================================= */
     @media (max-width: 768px) {{
         .stApp {{ background-attachment: scroll !important; }}
-
         .block-container {{
             padding-top: 1rem !important;
             padding-bottom: 1rem !important;
             padding-left: 0.5rem !important;
             padding-right: 0.5rem !important;
         }}
-
-        .hud-wrapper {{
-            height: 220px;
-            margin-bottom: 0.5rem;
-            margin-top: 0.5rem;
-        }}
+        .hud-wrapper {{ height: 220px; margin-bottom: 0.5rem; margin-top: 0.5rem; }}
         .hud-ring-outer {{ width: 200px; height: 200px; }}
         .hud-ring-mid {{ width: 170px; height: 170px; }}
         .hud-ring-inner {{ width: 140px; height: 140px; }}
         .hud-core {{ width: 120px; height: 120px; }}
-
         .header-title {{ font-size: 1.5rem; letter-spacing: 1px; }}
         .subtitle {{ font-size: 0.65rem; letter-spacing: 2px; margin-bottom: 1.5rem; }}
-        
-        [data-testid="stChatMessage"] {{
-            padding: 0.8rem !important;
-            margin-bottom: 0.8rem !important;
-            border-left-width: 3px !important;
-        }}
-        [data-testid="stChatMessage"] p {{
-            font-size: 1rem !important;
-            line-height: 1.4 !important;
-        }}
-
-        /* Fix Chat Input for mobile keyboard */
-        [data-testid="stChatInput"] {{
-            border-radius: 8px !important;
-            margin-bottom: 5px !important;
-        }}
-        [data-testid="stChatInput"] textarea {{
-            font-size: 16px !important; /* Stops iOS zoom */
-            padding: 12px 10px !important;
-        }}
+        [data-testid="stChatMessage"] {{ padding: 0.8rem !important; margin-bottom: 0.8rem !important; border-left-width: 3px !important; }}
+        [data-testid="stChatMessage"] p {{ font-size: 1rem !important; line-height: 1.4 !important; }}
+        [data-testid="stChatInput"] {{ border-radius: 8px !important; margin-bottom: 5px !important; }}
+        [data-testid="stChatInput"] textarea {{ font-size: 16px !important; padding: 12px 10px !important; }}
     }}
     </style>
 """, unsafe_allow_html=True)
@@ -351,37 +318,89 @@ if not api_key:
 agent, store = get_agent(api_key, base_url, model_name)
 st.session_state["store"] = store
 
+# --- NEW: AUDIO TRANSCRIPTION FUNCTION ---
+def transcribe_audio(audio_file, api_key):
+    """Uses Groq's Whisper API to transcribe audio."""
+    try:
+        client = Groq(api_key=api_key)
+        
+        # The audio_file from st.chat_input is a BytesIO object.
+        # Groq's API expects a tuple: (filename, file_bytes, mime_type)
+        file_tuple = ("audio.wav", audio_file.getvalue(), "audio/wav")
+        
+        transcription = client.audio.transcriptions.create(
+            file=file_tuple,
+            model="whisper-large-v3",
+            language="or", # Odia language code (use "en" for English only)
+            response_format="text"
+        )
+        return transcription
+    except Exception as e:
+        st.error(f"Transcription Error: {e}")
+        return None
+
 # --- CHAT INTERFACE ---
 if "messages" not in st.session_state or len(st.session_state.messages) == 0:
     st.session_state.messages = []
     with st.chat_message("assistant", avatar="🛕"):
-        st.markdown("**SYSTEM INITIALIZED.** Namaskar, I am Jagan. How may I assist you?")
+        st.markdown("**SYSTEM INITIALIZED.** Namaskar, I am Jagan. You can **type** or **speak** in English or Odia. How may I assist you?")
 
 for message in st.session_state.messages:
     avatar = "🧑‍💻" if message["role"] == "user" else "🛕"
     with st.chat_message(message["role"], avatar=avatar):
         st.markdown(message["content"])
 
-# Shortened placeholder text for mobile
-if prompt := st.chat_input("Ask Jagan (English / ଓଡ଼ିଆ)..."):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user", avatar="🧑‍💻"):
-        st.markdown(prompt)
+# --- UPDATED CHAT INPUT WITH AUDIO SUPPORT ---
+# accept_audio=True adds a microphone button next to the send button.
+chat_input_result = st.chat_input(
+    "Ask Jagan (English / ଓଡ଼ିଆ)...", 
+    accept_audio=True
+)
 
-    with st.chat_message("assistant", avatar="🛕"):
-        with st.spinner("PROCESSING..."):
-            tool_log = []
-            def on_tool(name, args):
-                tool_log.append(f"⚙️ EXECUTED: `{name}`")
+if chat_input_result:
+    prompt = None
+    audio_file = None
 
-            try:
-                if store:
-                    agent.reg.tools["search_docs"].fn.__globals__['store'] = store
-                
-                response = agent.step(prompt, on_tool)
-                
-                st.markdown(response)
-                st.session_state.messages.append({"role": "assistant", "content": response})
-                
-            except Exception as e:
-                st.error(f"SYSTEM ERROR: {str(e)}")
+    # Check if the result contains audio or text
+    if hasattr(chat_input_result, "audio") and chat_input_result.audio is not None:
+        audio_file = chat_input_result.audio
+    elif hasattr(chat_input_result, "text") and chat_input_result.text:
+        prompt = chat_input_result.text
+    elif isinstance(chat_input_result, str):
+        prompt = chat_input_result # Fallback
+
+    # --- HANDLE AUDIO INPUT ---
+    if audio_file:
+        with st.chat_message("user", avatar="🧑‍💻"):
+            st.audio(audio_file) # Show the recorded audio player
+            with st.spinner("🎙️ Transcribing..."):
+                prompt = transcribe_audio(audio_file, api_key)
+                if prompt:
+                    st.markdown(f"**Transcribed:** {prompt}")
+                else:
+                    st.error("Could not transcribe audio. Please try again.")
+                    st.stop()
+
+    # --- PROCESS TEXT OR TRANSCRIBED PROMPT ---
+    if prompt:
+        # Add user message to history
+        st.session_state.messages.append({"role": "user", "content": prompt})
+
+        # Generate response
+        with st.chat_message("assistant", avatar="🛕"):
+            with st.spinner("PROCESSING..."):
+                tool_log = []
+                def on_tool(name, args):
+                    tool_log.append(f"⚙️ EXECUTED: `{name}`")
+
+                try:
+                    if store:
+                        agent.reg.tools["search_docs"].fn.__globals__['store'] = store
+                    
+                    response = agent.step(prompt, on_tool)
+                    
+                    st.markdown(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                    
+                except Exception as e:
+                    st.error(f"SYSTEM ERROR: {str(e)}")
