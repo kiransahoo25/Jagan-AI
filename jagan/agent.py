@@ -47,7 +47,7 @@ class Agent:
         Console().print(f"[yellow]WARN {name}({json.dumps(args)[:300]})[/yellow]")
         return Confirm.ask("run?", default=False)
 
-    def step(self, user_input: str, on_tool=lambda n, a: None) -> str:
+    def step(self, user_input, on_tool=lambda n, a: None) -> str:
         self.messages.append({"role": "user", "content": user_input})
 
         for _ in range(25):

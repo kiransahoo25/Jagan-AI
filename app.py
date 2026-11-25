@@ -255,7 +255,8 @@ except Exception:
     api_key = os.getenv("GROQ_API_KEY", "")
     
 base_url = "https://api.groq.com/openai/v1"
-model_name = "openai/gpt-oss-120b"
+TEXT_MODEL = "openai/gpt-oss-120b"
+VISION_MODEL = "qwen/qwen3.8-27b" # Model for image processing
 
 # --- SIDEBAR ---
 with st.sidebar:
@@ -303,7 +304,7 @@ if not api_key:
     st.error("⚠️ SYSTEM OFFLINE: API Key missing in secrets.")
     st.stop()
 
-agent, store = get_agent(api_key, base_url, model_name)
+agent, store = get_agent(api_key, base_url, TEXT_MODEL)
 st.session_state["store"] = store
 
 # --- AUDIO TRANSCRIPTION ---
@@ -325,59 +326,95 @@ def transcribe_audio(audio_file, api_key):
 if "messages" not in st.session_state or len(st.session_state.messages) == 0:
     st.session_state.messages = []
     with st.chat_message("assistant", avatar="🛕"):
-        st.markdown("**SYSTEM INITIALIZED.** Namaskar, I am Jagan. You can **type** or **speak** in English or Odia.")
+        st.markdown("**SYSTEM INITIALIZED.** Namaskar, I am Jagan. You can **type**, **speak**, or **upload an image**.")
 
 # Render previous chat history
 for message in st.session_state.messages:
     avatar = "🧑‍💻" if message["role"] == "user" else "🛕"
     with st.chat_message(message["role"], avatar=avatar):
-        st.markdown(message["content"])
+        if isinstance(message["content"], list):
+            # Extract text from complex payload
+            text_content = next((item["text"] for item in message["content"] if item["type"] == "text"), "")
+            st.markdown(text_content)
+            if any(item["type"] == "image_url" for item in message["content"]):
+                st.caption("📸 Image attached")
+        else:
+            st.markdown(message["content"])
 
-# --- UPDATED CHAT INPUT (FIXED VISIBILITY) ---
+# --- VISION UPLOADER (Placed right above chat input) ---
+with st.popover("📸 Vision (Upload or Capture)"):
+    img_file = st.camera_input("Take a photo") or st.file_uploader("Or upload an image", type=["jpg", "png", "jpeg"])
+    if img_file:
+        st.session_state["current_image"] = img_file
+        st.image(img_file, caption="Image ready to send", use_container_width=True)
+
+# --- CHAT INPUT ---
 chat_input_result = st.chat_input("Ask Jagan (English / ଓଡ଼ିଆ)...", accept_audio=True)
 
 if chat_input_result:
     prompt = None
+    img_b64 = None
     
-    # 1. Handle Audio Input
+    # 1. Process Audio
     if hasattr(chat_input_result, "audio") and chat_input_result.audio is not None:
-        audio_file = chat_input_result.audio
-        
-        # Display user bubble with audio
         with st.chat_message("user", avatar="🧑‍💻"):
-            st.audio(audio_file)
+            st.audio(chat_input_result.audio)
             with st.spinner("🎙️ Transcribing..."):
-                prompt = transcribe_audio(audio_file, api_key)
-            if prompt:
-                st.markdown(f"_{prompt}_")
-            else:
-                st.error("Could not transcribe audio.")
-                st.stop()
+                prompt = transcribe_audio(chat_input_result.audio, api_key)
+            if prompt: st.markdown(f"_{prompt}_")
                 
-    # 2. Handle Text Input
+    # 2. Process Text
     elif hasattr(chat_input_result, "text") and chat_input_result.text:
         prompt = chat_input_result.text
-        # Display user bubble with text
-        with st.chat_message("user", avatar="🧑‍💻"):
-            st.markdown(prompt)
-            
     elif isinstance(chat_input_result, str):
         prompt = chat_input_result
-        with st.chat_message("user", avatar="🧑‍💻"):
-            st.markdown(prompt)
 
-    # 3. Process the Prompt (Audio or Text)
-    if prompt:
-        st.session_state.messages.append({"role": "user", "content": prompt})
+    # 3. Check for Image
+    if "current_image" in st.session_state and st.session_state["current_image"] is not None:
+        img_bytes = st.session_state["current_image"].getvalue()
+        img_b64 = base64.b64encode(img_bytes).decode("utf-8")
         
+        # If user didn't type anything, give a default prompt
+        if not prompt:
+            prompt = "Describe this image in detail. If there is text, read it."
+
+    # 4. Execute
+    if prompt:
+        # Display user bubble (if text/audio hasn't been displayed yet)
+        if not (hasattr(chat_input_result, "audio") and chat_input_result.audio):
+            with st.chat_message("user", avatar="🧑‍💻"):
+                st.markdown(prompt)
+                if img_b64: st.image(st.session_state["current_image"], width=200)
+
+        # Build payload
+        if img_b64:
+            # Format for Vision API
+            content_payload = [
+                {"type": "text", "text": prompt},
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"}}
+            ]
+            st.session_state.messages.append({"role": "user", "content": content_payload})
+            
+            # Temporarily switch model to Vision
+            agent.llm.model = VISION_MODEL 
+        else:
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            agent.llm.model = TEXT_MODEL
+
+        # Generate Response
         with st.chat_message("assistant", avatar="🛕"):
             with st.spinner("PROCESSING..."):
                 try:
                     if store:
                         agent.reg.tools["search_docs"].fn.__globals__['store'] = store
                     
-                    response = agent.step(prompt)
+                    response = agent.step(prompt if not img_b64 else content_payload)
                     st.markdown(response)
                     st.session_state.messages.append({"role": "assistant", "content": response})
+                    
+                    # Clean up image and reset model
+                    st.session_state["current_image"] = None
+                    agent.llm.model = TEXT_MODEL 
+                    st.rerun() # Refresh to clear the image uploader
                 except Exception as e:
                     st.error(f"SYSTEM ERROR: {str(e)}")
